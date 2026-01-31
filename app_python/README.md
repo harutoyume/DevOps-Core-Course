@@ -23,9 +23,9 @@ The DevOps Info Service is designed to report detailed information about itself 
 
 ## Installation
 
-1. **Clone the repository** (if you haven't already):
+1. **Clone the repository**:
    ```bash
-   git clone <your-fork-url>
+   git clone https://github.com/harutoyume/DevOps-Core-Course.git
    cd DevOps-Core-Course/app_python
    ```
 
@@ -75,6 +75,87 @@ DEBUG=true python app.py
 # Combine multiple configurations
 HOST=127.0.0.1 PORT=3000 DEBUG=true python app.py
 ```
+
+## Docker
+
+This application is containerized and available on Docker Hub. You can run it using Docker without installing Python or dependencies locally.
+
+### Pull from Docker Hub
+
+Pull the pre-built image from Docker Hub:
+
+```bash
+docker pull haruyume/devops-info-service:latest
+```
+
+Or pull a specific version:
+
+```bash
+docker pull haruyume/devops-info-service:1.0.0
+```
+
+### Run the Container
+
+Run the container with default settings (port 5001 on host, mapping to 5000 in container):
+
+```bash
+docker run -p 5001:5000 haruyume/devops-info-service:latest
+```
+
+Run in detached mode (background):
+
+```bash
+docker run -d -p 5001:5000 --name devops-service haruyume/devops-info-service:latest
+```
+
+Run with custom configuration using environment variables:
+
+```bash
+docker run -p 8081:8080 -e PORT=8080 -e DEBUG=true haruyume/devops-info-service:latest
+```
+
+### Build Locally
+
+If you want to build the image yourself:
+
+```bash
+# Build from the app_python directory
+docker build -t devops-info-service:latest .
+
+# Or build from the repository root
+docker build -t devops-info-service:latest app_python/
+```
+
+### Docker Commands Reference
+
+```bash
+# View running containers
+docker ps
+
+# View container logs
+docker logs <container-name>
+
+# Stop a running container
+docker stop <container-name>
+
+# Remove a stopped container
+docker rm <container-name>
+
+# View image details
+docker inspect haruyume/devops-info-service:latest
+
+# Remove local image
+docker rmi haruyume/devops-info-service:latest
+```
+
+### Docker Image Details
+
+- **Base Image:** python:3.13-slim
+- **Size:** ~150-200MB
+- **Security:** Runs as non-root user
+- **Internal Port:** 5000
+- **Recommended Host Port:** 5001 (to avoid macOS AirPlay conflict)
+- **Docker Hub:** [haruyume/devops-info-service](https://hub.docker.com/r/haruyume/devops-info-service)
 
 ## API Endpoints
 
