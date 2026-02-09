@@ -14,6 +14,9 @@ The DevOps Info Service is designed to report detailed information about itself 
 - Configurable via environment variables
 - JSON API responses
 - Error handling and logging
+- Automated CI/CD pipeline with GitHub Actions
+- Comprehensive test suite with pytest
+- Security scanning with Snyk
 
 ## Prerequisites
 
@@ -256,6 +259,56 @@ The application supports the following environment variables:
 | `DEBUG` | `False` | Enable Flask debug mode (`true` or `false`) |
 
 ## Testing
+
+This application includes a comprehensive test suite with 23+ tests covering all endpoints, helper functions, and error handlers.
+
+### Running Tests Locally
+
+1. **Install test dependencies**:
+   ```bash
+   pip install -r requirements-dev.txt
+   ```
+
+2. **Run all tests**:
+   ```bash
+   pytest -v
+   ```
+
+3. **Run specific test categories**:
+   ```bash
+   # Run only unit tests
+   pytest -m unit -v
+   
+   # Run only integration tests
+   pytest -m integration -v
+   ```
+
+4. **Run linter**:
+   ```bash
+   ruff check .
+   ```
+
+### Test Coverage
+
+The test suite covers:
+- All API endpoints (`/`, `/health`)
+- Helper functions (`get_system_info`, `get_uptime`, `get_runtime_info`)
+- Error handlers (404, 500)
+- JSON structure validation
+- Request metadata capture
+- Edge cases and error conditions
+
+### Continuous Integration
+
+Every push and pull request automatically triggers:
+- **Linting** with Ruff (Python style and syntax checking)
+- **Unit tests** with pytest (23+ tests)
+- **Security scanning** with Snyk (vulnerability detection)
+- **Docker build** with CalVer versioning (on master/lab03 branches)
+
+View the CI/CD pipeline: [GitHub Actions](https://github.com/harutoyume/DevOps-Core-Course/actions)
+
+## Manual Testing
 
 ### Using curl
 
