@@ -4,7 +4,7 @@ Tests all endpoints, helper functions, and error handlers.
 """
 import pytest
 import json
-from datetime import datetime, timezone
+from datetime import datetime
 from app import app, get_system_info, get_uptime, get_runtime_info, get_endpoints
 
 
@@ -294,7 +294,6 @@ def test_multiple_endpoint_paths(client):
     
     # Test health path
     response2 = client.get('/health')
-    data2 = json.loads(response2.data)
     # Health endpoint doesn't include request info, so just verify it works
     assert response2.status_code == 200
 
