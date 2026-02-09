@@ -1,3 +1,5 @@
+[![CI/CD Pipeline](https://github.com/harutoyume/DevOps-Core-Course/actions/workflows/python-ci.yml/badge.svg)](https://github.com/harutoyume/DevOps-Core-Course/actions/workflows/python-ci.yml)
+
 # DevOps Info Service
 
 A lightweight Python web service that provides comprehensive system and runtime information through a REST API. Built with Flask as part of the DevOps Engineering course.
