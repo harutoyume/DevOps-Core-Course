@@ -1,0 +1,50 @@
+
+PLAY [Provision web servers] ***************************************************
+
+TASK [Gathering Facts] *********************************************************
+ok: [devops-vm]
+
+TASK [common : Update apt cache] ***********************************************
+ok: [devops-vm]
+
+TASK [common : Install common packages] ****************************************
+ok: [devops-vm]
+
+TASK [common : Set timezone] ***************************************************
+ok: [devops-vm]
+
+TASK [docker : Install Docker prerequisites] ***********************************
+ok: [devops-vm]
+
+TASK [docker : Add Docker GPG key] *********************************************
+ok: [devops-vm]
+
+TASK [docker : Determine Docker architecture] **********************************
+ok: [devops-vm]
+
+TASK [docker : Remove old Docker repository file if it exists] *****************
+ok: [devops-vm]
+
+TASK [docker : Add Docker repository with correct architecture] ****************
+changed: [devops-vm]
+
+TASK [docker : Update apt cache after adding Docker repository] ****************
+ok: [devops-vm]
+
+TASK [docker : Install Docker packages] ****************************************
+ok: [devops-vm]
+
+TASK [docker : Install python3-docker for Ansible modules] *********************
+ok: [devops-vm]
+
+TASK [docker : Ensure Docker service is started and enabled] *******************
+ok: [devops-vm]
+
+TASK [docker : Add users to docker group] **************************************
+ok: [devops-vm] => (item=vagrant)
+
+TASK [docker : Reset SSH connection to apply group changes] ********************
+
+PLAY RECAP *********************************************************************
+devops-vm                  : ok=14   changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+

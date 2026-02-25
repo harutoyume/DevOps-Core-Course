@@ -1,0 +1,40 @@
+{
+  "endpoints": [
+    {
+      "description": "Service information",
+      "method": "GET",
+      "path": "/"
+    },
+    {
+      "description": "Health check",
+      "method": "GET",
+      "path": "/health"
+    }
+  ],
+  "request": {
+    "client_ip": "10.0.2.2",
+    "method": "GET",
+    "path": "/",
+    "user_agent": "curl/8.7.1"
+  },
+  "runtime": {
+    "current_time": "2026-02-25T09:04:22.177496+00:00",
+    "timezone": "UTC",
+    "uptime_human": "1 minute, 26 seconds",
+    "uptime_seconds": 86
+  },
+  "service": {
+    "description": "DevOps course info service",
+    "framework": "Flask",
+    "name": "devops-info-service",
+    "version": "1.0.0"
+  },
+  "system": {
+    "architecture": "aarch64",
+    "cpu_count": 2,
+    "hostname": "300bd45cf57c",
+    "platform": "Linux",
+    "platform_version": "#87-Ubuntu SMP PREEMPT_DYNAMIC Mon Sep 22 17:54:31 UTC 2025",
+    "python_version": "3.13.12"
+  }
+}

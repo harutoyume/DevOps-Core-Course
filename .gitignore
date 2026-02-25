@@ -47,3 +47,9 @@ Thumbs.db
 .pytest_cache/
 .coverage
 htmlcov/
+
+# Ansible
+*.retry
+.vault_pass
+ansible/**/*.pyc
+ansible/**/__pycache__/

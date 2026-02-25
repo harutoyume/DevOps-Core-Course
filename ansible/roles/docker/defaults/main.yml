@@ -1,0 +1,18 @@
+---
+# Default variables for docker role
+
+docker_packages:
+  - docker-ce
+  - docker-ce-cli
+  - containerd.io
+
+docker_users:
+  - vagrant
+
+docker_apt_gpg_key: https://download.docker.com/linux/ubuntu/gpg
+
+# Map architecture to Docker's naming convention
+# aarch64 -> arm64, x86_64 -> amd64
+docker_architecture_map:
+  aarch64: arm64
+  x86_64: amd64

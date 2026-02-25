@@ -1,0 +1,42 @@
+
+PLAY [Deploy application] ******************************************************
+
+TASK [Gathering Facts] *********************************************************
+ok: [devops-vm]
+
+TASK [app_deploy : Log in to Docker Hub] ***************************************
+[ERROR]: Task failed: Finalization of task args for 'community.docker.docker_login' failed: Error while resolving value for 'password': 'dockerhub_password' is undefined
+
+Task failed.
+Origin: /Users/haru/Documents/GitHub/DevOps-Core-Course/ansible/roles/app_deploy/tasks/main.yml:4:3
+
+2 # Application deployment role tasks
+3
+4 - name: Log in to Docker Hub
+    ^ column 3
+
+<<< caused by >>>
+
+Finalization of task args for 'community.docker.docker_login' failed.
+Origin: /Users/haru/Documents/GitHub/DevOps-Core-Course/ansible/roles/app_deploy/tasks/main.yml:5:3
+
+3
+4 - name: Log in to Docker Hub
+5   community.docker.docker_login:
+    ^ column 3
+
+<<< caused by >>>
+
+Error while resolving value for 'password': 'dockerhub_password' is undefined
+Origin: /Users/haru/Documents/GitHub/DevOps-Core-Course/ansible/roles/app_deploy/tasks/main.yml:7:15
+
+5   community.docker.docker_login:
+6     username: "{{ dockerhub_username }}"
+7     password: "{{ dockerhub_password }}"
+                ^ column 15
+
+fatal: [devops-vm]: FAILED! => {"censored": "the output has been hidden due to the fact that 'no_log: true' was specified for this result", "changed": false}
+
+PLAY RECAP *********************************************************************
+devops-vm                  : ok=1    changed=0    unreachable=0    failed=1    skipped=0    rescued=0    ignored=0   
+
