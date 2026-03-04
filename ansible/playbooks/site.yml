@@ -1,8 +1,8 @@
 ---
 - name: Complete infrastructure setup and deployment
   hosts: webservers
-  become: yes
-  
+  become: true
+
   vars_files:
     - ../group_vars/all.yml
 

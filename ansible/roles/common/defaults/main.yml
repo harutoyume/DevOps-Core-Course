@@ -11,4 +11,4 @@ common_packages:
   - wget
   - build-essential
 
-timezone: UTC
+common_timezone: UTC
