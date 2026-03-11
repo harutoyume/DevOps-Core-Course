@@ -6,8 +6,10 @@ import os
 import socket
 import platform
 import logging
+import sys
 from datetime import datetime, timezone
 from flask import Flask, jsonify, request
+from pythonjsonlogger import jsonlogger
 
 # Initialize Flask application
 app = Flask(__name__)
@@ -20,11 +22,29 @@ DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
 # Application start time for uptime calculation
 START_TIME = datetime.now(timezone.utc)
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
+# Configure JSON logging for structured log output
+class CustomJsonFormatter(jsonlogger.JsonFormatter):
+    """Custom JSON formatter that adds standard fields to every log entry."""
+
+    def add_fields(self, log_record, record, message_dict):
+        super().add_fields(log_record, record, message_dict)
+        log_record['timestamp'] = datetime.now(timezone.utc).isoformat()
+        log_record['level'] = record.levelname
+        log_record['logger'] = record.name
+
+
+def setup_logging():
+    """Set up JSON-formatted logging to stdout."""
+    handler = logging.StreamHandler(sys.stdout)
+    formatter = CustomJsonFormatter('%(timestamp)s %(level)s %(name)s %(message)s')
+    handler.setFormatter(formatter)
+
+    root_logger = logging.getLogger()
+    root_logger.setLevel(logging.INFO)
+    root_logger.addHandler(handler)
+
+
+setup_logging()
 logger = logging.getLogger(__name__)
 
 
@@ -128,6 +148,35 @@ def get_endpoints():
     ]
 
 
+@app.before_request
+def log_request():
+    """Log incoming HTTP request details."""
+    logger.info(
+        "Incoming request",
+        extra={
+            'method': request.method,
+            'path': request.path,
+            'client_ip': request.remote_addr,
+            'user_agent': request.headers.get('User-Agent', 'Unknown')
+        }
+    )
+
+
+@app.after_request
+def log_response(response):
+    """Log HTTP response details."""
+    logger.info(
+        "Request completed",
+        extra={
+            'method': request.method,
+            'path': request.path,
+            'status_code': response.status_code,
+            'client_ip': request.remote_addr
+        }
+    )
+    return response
+
+
 @app.route('/')
 def index():
     """
@@ -136,8 +185,6 @@ def index():
     Returns:
         JSON response with service, system, runtime, request info, and endpoints.
     """
-    logger.info(f"Request: {request.method} {request.path} from {request.remote_addr}")
-    
     response = {
         'service': {
             'name': 'devops-info-service',
@@ -162,8 +209,6 @@ def health():
     Returns:
         JSON response with health status and uptime.
     """
-    logger.debug(f"Health check from {request.remote_addr}")
-    
     response = {
         'status': 'healthy',
         'timestamp': datetime.now(timezone.utc).isoformat(),
@@ -184,7 +229,7 @@ def not_found(error):
     Returns:
         JSON error response with 404 status code.
     """
-    logger.warning(f"404 Not Found: {request.path}")
+    logger.warning("404 Not Found", extra={'path': request.path})
     return jsonify({
         'error': 'Not Found',
         'message': 'The requested endpoint does not exist',
@@ -203,7 +248,7 @@ def internal_error(error):
     Returns:
         JSON error response with 500 status code.
     """
-    logger.error(f"500 Internal Server Error: {error}")
+    logger.error("500 Internal Server Error", extra={'error': str(error)})
     return jsonify({
         'error': 'Internal Server Error',
         'message': 'An unexpected error occurred'
@@ -211,6 +256,8 @@ def internal_error(error):
 
 
 if __name__ == '__main__':
-    logger.info(f'Starting DevOps Info Service on {HOST}:{PORT}')
-    logger.info(f'Debug mode: {DEBUG}')
+    logger.info(
+        'Starting DevOps Info Service',
+        extra={'host': HOST, 'port': PORT, 'debug': DEBUG}
+    )
     app.run(host=HOST, port=PORT, debug=DEBUG)

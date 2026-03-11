@@ -48,6 +48,9 @@ Thumbs.db
 .coverage
 htmlcov/
 
+# Environment variables
+.env
+
 # Ansible
 *.retry
 .vault_pass
