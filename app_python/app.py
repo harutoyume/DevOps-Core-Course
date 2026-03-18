@@ -7,9 +7,11 @@ import socket
 import platform
 import logging
 import sys
+import time
 from datetime import datetime, timezone
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, Response, g
 from pythonjsonlogger import jsonlogger
+from prometheus_client import Counter, Histogram, Gauge, generate_latest, CONTENT_TYPE_LATEST
 
 # Initialize Flask application
 app = Flask(__name__)
@@ -21,6 +23,52 @@ DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
 
 # Application start time for uptime calculation
 START_TIME = datetime.now(timezone.utc)
+
+# =============================================================================
+# Prometheus Metrics
+# =============================================================================
+
+# Counter: Total HTTP requests (RED method - Rate)
+http_requests_total = Counter(
+    'http_requests_total',
+    'Total HTTP requests',
+    ['method', 'endpoint', 'status']
+)
+
+# Histogram: Request duration in seconds (RED method - Duration)
+http_request_duration_seconds = Histogram(
+    'http_request_duration_seconds',
+    'HTTP request duration in seconds',
+    ['method', 'endpoint'],
+    buckets=[0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0]
+)
+
+# Gauge: Requests currently being processed
+http_requests_in_progress = Gauge(
+    'http_requests_in_progress',
+    'HTTP requests currently being processed'
+)
+
+# Application-specific metrics
+devops_info_endpoint_calls = Counter(
+    'devops_info_endpoint_calls',
+    'Endpoint calls by endpoint name',
+    ['endpoint']
+)
+
+system_info_collection_duration_seconds = Histogram(
+    'system_info_collection_duration_seconds',
+    'Time to collect system information',
+    buckets=[0.001, 0.005, 0.01, 0.025, 0.05, 0.1]
+)
+
+# Application info gauge (provides static metadata)
+app_info = Gauge(
+    'devops_info_service_info',
+    'Application information',
+    ['version', 'python_version']
+)
+app_info.labels(version='1.0.0', python_version=platform.python_version()).set(1)
 
 # Configure JSON logging for structured log output
 class CustomJsonFormatter(jsonlogger.JsonFormatter):
@@ -144,13 +192,54 @@ def get_endpoints():
             'path': '/health',
             'method': 'GET',
             'description': 'Health check'
+        },
+        {
+            'path': '/metrics',
+            'method': 'GET',
+            'description': 'Prometheus metrics'
         }
     ]
+
+
+def normalize_endpoint(path):
+    """
+    Normalize endpoint path for metric labels.
+    Keeps cardinality low by grouping similar paths.
+    
+    Args:
+        path: The request path
+        
+    Returns:
+        str: Normalized endpoint name
+    """
+    if path == '/':
+        return '/'
+    elif path == '/health':
+        return '/health'
+    elif path == '/metrics':
+        return '/metrics'
+    else:
+        return '/other'
+
+
+@app.before_request
+def before_request_metrics():
+    """Track request start time and increment in-progress gauge."""
+    # Skip metrics endpoint to avoid self-referential metrics
+    if request.path == '/metrics':
+        return
+    
+    g.start_time = time.time()
+    http_requests_in_progress.inc()
 
 
 @app.before_request
 def log_request():
     """Log incoming HTTP request details."""
+    # Skip logging for metrics endpoint
+    if request.path == '/metrics':
+        return
+    
     logger.info(
         "Incoming request",
         extra={
@@ -163,8 +252,43 @@ def log_request():
 
 
 @app.after_request
+def after_request_metrics(response):
+    """Record request metrics after completion."""
+    # Skip metrics endpoint
+    if request.path == '/metrics':
+        return response
+    
+    # Calculate request duration
+    if hasattr(g, 'start_time'):
+        duration = time.time() - g.start_time
+        endpoint = normalize_endpoint(request.path)
+        
+        # Record histogram observation
+        http_request_duration_seconds.labels(
+            method=request.method,
+            endpoint=endpoint
+        ).observe(duration)
+        
+        # Increment request counter
+        http_requests_total.labels(
+            method=request.method,
+            endpoint=endpoint,
+            status=str(response.status_code)
+        ).inc()
+        
+        # Decrement in-progress gauge
+        http_requests_in_progress.dec()
+    
+    return response
+
+
+@app.after_request
 def log_response(response):
     """Log HTTP response details."""
+    # Skip logging for metrics endpoint
+    if request.path == '/metrics':
+        return response
+    
     logger.info(
         "Request completed",
         extra={
@@ -185,6 +309,13 @@ def index():
     Returns:
         JSON response with service, system, runtime, request info, and endpoints.
     """
+    # Track business metric
+    devops_info_endpoint_calls.labels(endpoint='/').inc()
+    
+    # Track system info collection time
+    with system_info_collection_duration_seconds.time():
+        system_info = get_system_info()
+    
     response = {
         'service': {
             'name': 'devops-info-service',
@@ -192,7 +323,7 @@ def index():
             'description': 'DevOps course info service',
             'framework': 'Flask'
         },
-        'system': get_system_info(),
+        'system': system_info,
         'runtime': get_runtime_info(),
         'request': get_request_info(request),
         'endpoints': get_endpoints()
@@ -209,6 +340,9 @@ def health():
     Returns:
         JSON response with health status and uptime.
     """
+    # Track business metric
+    devops_info_endpoint_calls.labels(endpoint='/health').inc()
+    
     response = {
         'status': 'healthy',
         'timestamp': datetime.now(timezone.utc).isoformat(),
@@ -216,6 +350,17 @@ def health():
     }
     
     return jsonify(response)
+
+
+@app.route('/metrics')
+def metrics():
+    """
+    Prometheus metrics endpoint.
+    
+    Returns:
+        Prometheus text format metrics.
+    """
+    return Response(generate_latest(), mimetype=CONTENT_TYPE_LATEST)
 
 
 @app.errorhandler(404)

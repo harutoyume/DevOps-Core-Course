@@ -1,0 +1,32 @@
+# Prometheus Configuration
+# Lab 8 - Metrics & Monitoring
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+# Scrape configurations
+scrape_configs:
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+    metrics_path: '/metrics'
+
+  # Python application metrics
+  - job_name: 'app'
+    static_configs:
+      - targets: ['app-python:5000']
+    metrics_path: '/metrics'
+
+  # Loki metrics
+  - job_name: 'loki'
+    static_configs:
+      - targets: ['loki:3100']
+    metrics_path: '/metrics'
+
+  # Grafana metrics
+  - job_name: 'grafana'
+    static_configs:
+      - targets: ['grafana:3000']
+    metrics_path: '/metrics'
