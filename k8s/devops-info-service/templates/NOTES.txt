@@ -1,0 +1,56 @@
+========================================
+DevOps Info Service has been deployed!
+========================================
+
+Chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+Release: {{ .Release.Name }}
+Namespace: {{ .Release.Namespace }}
+
+Your application is now running with {{ .Values.replicaCount }} replica(s).
+
+To access your application:
+
+{{- if eq .Values.service.type "NodePort" }}
+
+1. Get the application URL:
+
+   export NODE_PORT=$(kubectl get --namespace {{ .Release.Namespace }} -o jsonpath="{.spec.ports[0].nodePort}" services {{ include "devops-info-service.fullname" . }})
+   export NODE_IP=$(kubectl get nodes --namespace {{ .Release.Namespace }} -o jsonpath="{.items[0].status.addresses[0].address}")
+   echo http://$NODE_IP:$NODE_PORT
+
+2. Or use kubectl port-forward:
+
+   kubectl port-forward --namespace {{ .Release.Namespace }} svc/{{ include "devops-info-service.fullname" . }} 8080:{{ .Values.service.port }}
+   echo "Visit http://127.0.0.1:8080"
+
+{{- else if eq .Values.service.type "LoadBalancer" }}
+
+1. Get the external IP (may take a few minutes):
+
+   kubectl get --namespace {{ .Release.Namespace }} svc {{ include "devops-info-service.fullname" . }} --watch
+
+2. Access your application:
+
+   export SERVICE_IP=$(kubectl get svc --namespace {{ .Release.Namespace }} {{ include "devops-info-service.fullname" . }} -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+   echo http://$SERVICE_IP:{{ .Values.service.port }}
+
+{{- else if eq .Values.service.type "ClusterIP" }}
+
+1. Access your application via port-forward:
+
+   kubectl port-forward --namespace {{ .Release.Namespace }} svc/{{ include "devops-info-service.fullname" . }} 8080:{{ .Values.service.port }}
+   echo "Visit http://127.0.0.1:8080"
+
+{{- end }}
+
+To check the status of your deployment:
+
+   kubectl get pods --namespace {{ .Release.Namespace }} -l "app.kubernetes.io/name={{ include "devops-info-service.name" . }},app.kubernetes.io/instance={{ .Release.Name }}"
+
+To view logs:
+
+   kubectl logs --namespace {{ .Release.Namespace }} -l "app.kubernetes.io/name={{ include "devops-info-service.name" . }}" -f
+
+========================================
+Happy DevOps-ing!
+========================================

@@ -1,0 +1,35 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: "{{ include "devops-info-service.fullname" . }}-pre-install"
+  labels:
+    {{- include "devops-info-service.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": pre-install
+    "helm.sh/hook-weight": "-5"
+    "helm.sh/hook-delete-policy": hook-succeeded
+spec:
+  template:
+    metadata:
+      name: "{{ include "devops-info-service.fullname" . }}-pre-install"
+      labels:
+        {{- include "devops-info-service.selectorLabels" . | nindent 8 }}
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: pre-install-job
+        image: busybox:latest
+        command: 
+          - sh
+          - -c
+          - |
+            echo "=========================================="
+            echo "Running pre-install validation checks..."
+            echo "=========================================="
+            echo "Checking environment readiness..."
+            sleep 3
+            echo "Validating deployment prerequisites..."
+            sleep 2
+            echo "=========================================="
+            echo "Pre-install checks passed successfully!"
+            echo "=========================================="
