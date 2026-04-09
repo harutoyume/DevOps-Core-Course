@@ -18,10 +18,15 @@ spec:
       maxUnavailable: 0
   template:
     metadata:
-      {{- with .Values.podAnnotations }}
       annotations:
+        {{- if .Values.vault.enabled }}
+        vault.hashicorp.com/agent-inject: "true"
+        vault.hashicorp.com/role: {{ .Values.vault.role | quote }}
+        vault.hashicorp.com/agent-inject-secret-config: "secret/data/devops-info-service/config"
+        {{- end }}
+        {{- with .Values.podAnnotations }}
         {{- toYaml . | nindent 8 }}
-      {{- end }}
+        {{- end }}
       labels:
         {{- include "devops-info-service.selectorLabels" . | nindent 8 }}
         {{- with .Values.podLabels }}
@@ -52,6 +57,11 @@ spec:
           {{- with .Values.env }}
           env:
             {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- if .Values.secrets.enabled }}
+          envFrom:
+            - secretRef:
+                name: {{ include "devops-info-service.fullname" . }}-secret
           {{- end }}
           {{- with .Values.livenessProbe }}
           livenessProbe:

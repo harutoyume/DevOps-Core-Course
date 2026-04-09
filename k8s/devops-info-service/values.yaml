@@ -40,6 +40,17 @@ env:
   - name: HOST
     value: "0.0.0.0"
 
+secrets:
+  enabled: true
+  data:
+    DB_USERNAME: "placeholder-user"
+    DB_PASSWORD: "placeholder-pass"
+    API_KEY: "placeholder-key"
+
+vault:
+  enabled: false
+  role: "devops-info-service"
+
 resources:
   limits:
     cpu: 200m
