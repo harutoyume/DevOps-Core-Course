@@ -12,6 +12,7 @@ from datetime import datetime, timezone
 from flask import Flask, jsonify, request, Response, g
 from pythonjsonlogger import jsonlogger
 from prometheus_client import Counter, Histogram, Gauge, generate_latest, CONTENT_TYPE_LATEST
+import threading
 
 # Initialize Flask application
 app = Flask(__name__)
@@ -20,9 +21,14 @@ app = Flask(__name__)
 HOST = os.getenv('HOST', '0.0.0.0')
 PORT = int(os.getenv('PORT', 5000))
 DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
+DATA_DIR = os.getenv('DATA_DIR', '/data')
+VISITS_FILE = os.path.join(DATA_DIR, 'visits')
 
 # Application start time for uptime calculation
 START_TIME = datetime.now(timezone.utc)
+
+# Thread lock for visits counter file operations
+visits_lock = threading.Lock()
 
 # =============================================================================
 # Prometheus Metrics
@@ -113,6 +119,51 @@ def get_system_info():
     }
 
 
+def get_visits_count():
+    """
+    Read the current visits count from file.
+    
+    Returns:
+        int: Current visits count, defaults to 0 if file doesn't exist.
+    """
+    with visits_lock:
+        try:
+            # Ensure data directory exists
+            os.makedirs(DATA_DIR, exist_ok=True)
+            
+            if os.path.exists(VISITS_FILE):
+                with open(VISITS_FILE, 'r') as f:
+                    return int(f.read().strip())
+            return 0
+        except (ValueError, IOError) as e:
+            logger.warning(f"Error reading visits count: {e}")
+            return 0
+
+
+def increment_visits():
+    """
+    Increment the visits counter and save to file.
+    
+    Returns:
+        int: New visits count after increment.
+    """
+    with visits_lock:
+        try:
+            # Ensure data directory exists
+            os.makedirs(DATA_DIR, exist_ok=True)
+            
+            count = get_visits_count()
+            count += 1
+            
+            with open(VISITS_FILE, 'w') as f:
+                f.write(str(count))
+            
+            return count
+        except IOError as e:
+            logger.error(f"Error writing visits count: {e}")
+            return get_visits_count()
+
+
 def get_uptime():
     """
     Calculate application uptime.
@@ -194,6 +245,11 @@ def get_endpoints():
             'description': 'Health check'
         },
         {
+            'path': '/visits',
+            'method': 'GET',
+            'description': 'Visit counter'
+        },
+        {
             'path': '/metrics',
             'method': 'GET',
             'description': 'Prometheus metrics'
@@ -216,6 +272,8 @@ def normalize_endpoint(path):
         return '/'
     elif path == '/health':
         return '/health'
+    elif path == '/visits':
+        return '/visits'
     elif path == '/metrics':
         return '/metrics'
     else:
@@ -305,10 +363,14 @@ def log_response(response):
 def index():
     """
     Main endpoint - returns comprehensive service and system information.
+    Increments visit counter on each access.
     
     Returns:
         JSON response with service, system, runtime, request info, and endpoints.
     """
+    # Increment visits counter
+    visits = increment_visits()
+    
     # Track business metric
     devops_info_endpoint_calls.labels(endpoint='/').inc()
     
@@ -326,7 +388,8 @@ def index():
         'system': system_info,
         'runtime': get_runtime_info(),
         'request': get_request_info(request),
-        'endpoints': get_endpoints()
+        'endpoints': get_endpoints(),
+        'visits': visits
     }
     
     return jsonify(response)
@@ -347,6 +410,27 @@ def health():
         'status': 'healthy',
         'timestamp': datetime.now(timezone.utc).isoformat(),
         'uptime_seconds': get_uptime()['seconds']
+    }
+    
+    return jsonify(response)
+
+
+@app.route('/visits')
+def visits():
+    """
+    Visits counter endpoint - returns the current visit count.
+    
+    Returns:
+        JSON response with current visits count.
+    """
+    # Track business metric
+    devops_info_endpoint_calls.labels(endpoint='/visits').inc()
+    
+    count = get_visits_count()
+    
+    response = {
+        'visits': count,
+        'timestamp': datetime.now(timezone.utc).isoformat()
     }
     
     return jsonify(response)

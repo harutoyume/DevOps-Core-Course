@@ -58,10 +58,14 @@ spec:
           env:
             {{- toYaml . | nindent 12 }}
           {{- end }}
-          {{- if .Values.secrets.enabled }}
           envFrom:
+          {{- if .Values.secrets.enabled }}
             - secretRef:
                 name: {{ include "devops-info-service.fullname" . }}-secret
+          {{- end }}
+          {{- if .Values.configMap.enabled }}
+            - configMapRef:
+                name: {{ include "devops-info-service.fullname" . }}-env
           {{- end }}
           {{- with .Values.livenessProbe }}
           livenessProbe:
@@ -75,13 +79,32 @@ spec:
           resources:
             {{- toYaml . | nindent 12 }}
           {{- end }}
-          {{- with .Values.volumeMounts }}
           volumeMounts:
+          {{- if .Values.configMap.enabled }}
+            - name: config-volume
+              mountPath: /config
+              readOnly: true
+          {{- end }}
+          {{- if .Values.persistence.enabled }}
+            - name: data-volume
+              mountPath: {{ .Values.configMap.dataDir }}
+          {{- end }}
+          {{- with .Values.volumeMounts }}
             {{- toYaml . | nindent 12 }}
           {{- end }}
       restartPolicy: Always
-      {{- with .Values.volumes }}
       volumes:
+      {{- if .Values.configMap.enabled }}
+        - name: config-volume
+          configMap:
+            name: {{ include "devops-info-service.fullname" . }}-config
+      {{- end }}
+      {{- if .Values.persistence.enabled }}
+        - name: data-volume
+          persistentVolumeClaim:
+            claimName: {{ include "devops-info-service.fullname" . }}-data
+      {{- end }}
+      {{- with .Values.volumes }}
         {{- toYaml . | nindent 8 }}
       {{- end }}
       {{- with .Values.nodeSelector }}

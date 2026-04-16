@@ -51,6 +51,19 @@ vault:
   enabled: false
   role: "devops-info-service"
 
+configMap:
+  enabled: true
+  environment: "production"
+  logLevel: "INFO"
+  enableMetrics: "true"
+  dataDir: "/data"
+
+persistence:
+  enabled: true
+  accessMode: ReadWriteOnce
+  size: 100Mi
+  storageClass: ""  # Use default storage class
+
 resources:
   limits:
     cpu: 200m

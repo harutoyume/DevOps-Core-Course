@@ -12,7 +12,9 @@ The DevOps Info Service is designed to report detailed information about itself 
 - System information introspection (hostname, platform, architecture, CPU count, Python version)
 - Runtime metrics (uptime tracking, current time)
 - Request details (client IP, user agent, HTTP method, path)
+- **Visit counter with persistent storage** (tracks page visits across container restarts)
 - Health check endpoint for monitoring
+- **Prometheus metrics endpoint** for observability
 - Configurable via environment variables
 - JSON API responses
 - Error handling and logging
@@ -119,6 +121,46 @@ Run with custom configuration using environment variables:
 docker run -p 8081:8080 -e PORT=8080 -e DEBUG=true haruyume/devops-info-service:latest
 ```
 
+Run with persistent data volume for visit counter:
+
+```bash
+docker run -d -p 5001:5000 -v $(pwd)/data:/data --name devops-service haruyume/devops-info-service:latest
+```
+
+### Docker Compose
+
+The easiest way to run the application with persistent storage is using Docker Compose.
+
+**Start the service:**
+
+```bash
+docker-compose up -d
+```
+
+**View logs:**
+
+```bash
+docker-compose logs -f
+```
+
+**Stop the service:**
+
+```bash
+docker-compose down
+```
+
+**Rebuild and restart:**
+
+```bash
+docker-compose up -d --build
+```
+
+The `docker-compose.yml` configuration includes:
+- Automatic container restart policy
+- Volume mounting for visit counter persistence (`./data:/data`)
+- Health checks
+- Environment variable configuration
+
 ### Build Locally
 
 If you want to build the image yourself:
@@ -212,10 +254,23 @@ curl http://localhost:5000/
       "path": "/health",
       "method": "GET",
       "description": "Health check"
+    },
+    {
+      "path": "/visits",
+      "method": "GET",
+      "description": "Visit counter"
+    },
+    {
+      "path": "/metrics",
+      "method": "GET",
+      "description": "Prometheus metrics"
     }
-  ]
+  ],
+  "visits": 42
 }
 ```
+
+**Note:** The response now includes a `visits` field showing the total number of times the root endpoint has been accessed.
 
 ### `GET /health`
 
@@ -233,6 +288,43 @@ curl http://localhost:5000/health
   "timestamp": "2026-01-27T14:30:00.000000+00:00",
   "uptime_seconds": 3600
 }
+```
+
+### `GET /visits`
+
+Returns the current visit counter value.
+
+**Request:**
+```bash
+curl http://localhost:5000/visits
+```
+
+**Response:** (200 OK)
+```json
+{
+  "visits": 42,
+  "timestamp": "2026-01-27T14:30:00.000000+00:00"
+}
+```
+
+**Note:** The visit counter increments each time the root endpoint (`/`) is accessed. The counter persists across container restarts when using volume mounting.
+
+### `GET /metrics`
+
+Prometheus metrics endpoint for monitoring and observability.
+
+**Request:**
+| `DATA_DIR` | `/data` | Directory path for persistent data storage (visits counter) |
+```bash
+curl http://localhost:5000/metrics
+```
+
+**Response:** (200 OK, text/plain)
+```
+# HELP http_requests_total Total HTTP requests
+# TYPE http_requests_total counter
+http_requests_total{endpoint="/",method="GET",status="200"} 42.0
+# ... more metrics
 ```
 
 ### Error Responses
