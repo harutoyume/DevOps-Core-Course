@@ -1,3 +1,4 @@
+# Blue-Green deployment configuration
 replicaCount: 3
 
 image:
@@ -102,10 +103,7 @@ volumeMounts: []
 
 # Argo Rollouts configuration
 rollout:
-  strategy: "canary"  # Options: "canary" or "blueGreen"
+  strategy: "blueGreen"  # Blue-Green strategy
   blueGreen:
-    autoPromotionEnabled: false
-    autoPromotionSeconds: 30
-nodeSelector: {}
-tolerations: []
-affinity: {}
+    autoPromotionEnabled: false  # Manual promotion
+    # autoPromotionSeconds: 30  # Uncomment for auto-promotion
