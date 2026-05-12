@@ -1,0 +1,12 @@
+---
+- name: Complete infrastructure setup and deployment
+  hosts: webservers
+  become: true
+
+  vars_files:
+    - ../group_vars/all.yml
+
+  roles:
+    - common
+    - docker
+    - web_app

@@ -1,0 +1,41 @@
+
+PLAY [Provision web servers] ***************************************************
+
+TASK [Gathering Facts] *********************************************************
+ok: [devops-vm]
+
+TASK [common : Update apt cache] ***********************************************
+ok: [devops-vm]
+
+TASK [common : Install common packages] ****************************************
+ok: [devops-vm]
+
+TASK [common : Set timezone] ***************************************************
+ok: [devops-vm]
+
+TASK [docker : Install Docker prerequisites] ***********************************
+ok: [devops-vm]
+
+TASK [docker : Add Docker GPG key] *********************************************
+ok: [devops-vm]
+
+TASK [docker : Add Docker repository] ******************************************
+ok: [devops-vm]
+
+TASK [docker : Update apt cache after adding Docker repository] ****************
+ok: [devops-vm]
+
+TASK [docker : Install Docker packages] ****************************************
+[ERROR]: Task failed: Module failed: No package matching 'docker-ce' is available
+Origin: /Users/haru/Documents/GitHub/DevOps-Core-Course/ansible/roles/docker/tasks/main.yml:31:3
+
+29     cache_valid_time: 0
+30
+31 - name: Install Docker packages
+     ^ column 3
+
+fatal: [devops-vm]: FAILED! => {"changed": false, "msg": "No package matching 'docker-ce' is available"}
+
+PLAY RECAP *********************************************************************
+devops-vm                  : ok=8    changed=0    unreachable=0    failed=1    skipped=0    rescued=0    ignored=0   
+

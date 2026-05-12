@@ -1,0 +1,26 @@
+{{- if .Values.configMap.enabled }}
+---
+# ConfigMap for application configuration file
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "devops-info-service.fullname" . }}-config
+  labels:
+    {{- include "devops-info-service.labels" . | nindent 4 }}
+data:
+  config.json: |-
+{{ .Files.Get "files/config.json" | indent 4 }}
+---
+# ConfigMap for environment variables
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "devops-info-service.fullname" . }}-env
+  labels:
+    {{- include "devops-info-service.labels" . | nindent 4 }}
+data:
+  APP_ENV: {{ .Values.configMap.environment | quote }}
+  LOG_LEVEL: {{ .Values.configMap.logLevel | quote }}
+  ENABLE_METRICS: {{ .Values.configMap.enableMetrics | quote }}
+  DATA_DIR: {{ .Values.configMap.dataDir | quote }}
+{{- end }}

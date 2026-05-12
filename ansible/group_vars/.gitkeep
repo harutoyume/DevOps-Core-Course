@@ -1,0 +1,2 @@
+# Placeholder for group_vars directory
+# You will create an encrypted all.yml file here using ansible-vault

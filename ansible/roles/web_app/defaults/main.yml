@@ -1,0 +1,21 @@
+---
+# Default variables for web_app role
+
+# Application Configuration
+web_app_name: devops-app
+web_app_docker_image: haruyume/devops-info-service
+web_app_docker_tag: latest
+web_app_port: 5000
+web_app_internal_port: 5000
+
+# Docker Compose Configuration
+web_app_compose_project_dir: "/opt/{{ web_app_name }}"
+web_app_docker_compose_version: "3.8"
+
+# Health Check Configuration
+web_app_health_check_timeout: 30
+web_app_health_endpoint: /health
+
+# Wipe Logic Control - requires both variable AND tag
+# Set to true to remove application completely
+web_app_wipe: false

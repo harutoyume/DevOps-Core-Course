@@ -1,0 +1,107 @@
+name: Ansible Deployment
+
+on:
+  push:
+    paths:
+      - 'ansible/**'
+      - '.github/workflows/ansible-deploy.yml'
+  pull_request:
+    paths:
+      - 'ansible/**'
+      - '.github/workflows/ansible-deploy.yml'
+
+jobs:
+  lint:
+    name: Ansible Lint
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          pip install ansible ansible-lint
+
+      - name: Create vault password file
+        run: |
+          echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}" > .vault_pass
+          chmod 600 .vault_pass
+        working-directory: ansible
+
+      - name: Run ansible-lint
+        run: |
+          ansible-lint playbooks/*.yml
+        working-directory: ansible
+
+      - name: Cleanup vault password
+        if: always()
+        run: |
+          rm -f ansible/.vault_pass
+
+  deploy:
+    name: Deploy Application
+    needs: lint
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main')
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Ansible
+        run: |
+          pip install ansible
+
+      - name: Install Ansible collections
+        run: |
+          ansible-galaxy collection install community.docker
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.VM_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Create vault password file
+        run: |
+          echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}" > /tmp/vault_pass
+          chmod 600 /tmp/vault_pass
+
+      - name: Update inventory with secrets
+        run: |
+          cd ansible
+          sed -i "s/ansible_host=127.0.0.1 ansible_port=2222/ansible_host=${{ secrets.VM_HOST }} ansible_port=22/" inventory/hosts.ini
+          sed -i "s|ansible_ssh_private_key_file=.*|ansible_ssh_private_key_file=~/.ssh/id_rsa|" inventory/hosts.ini
+          sed -i "s/ansible_user=vagrant/ansible_user=${{ secrets.VM_USER }}/" inventory/hosts.ini
+
+      - name: Deploy with Ansible
+        run: |
+          cd ansible
+          ansible-playbook playbooks/deploy.yml \
+            --vault-password-file /tmp/vault_pass \
+            -i inventory/hosts.ini
+
+      - name: Cleanup vault password
+        if: always()
+        run: |
+          rm -f /tmp/vault_pass
+
+      - name: Wait for application to start
+        run: sleep 10
+
+      - name: Verify application deployment
+        run: |
+          curl -f http://${{ secrets.VM_HOST }}:5000 || exit 1
+          curl -f http://${{ secrets.VM_HOST }}:5000/health || exit 1

@@ -1,0 +1,45 @@
+replicaCount: 1
+
+image:
+  tag: "latest"
+
+resources:
+  limits:
+    cpu: 100m
+    memory: 128Mi
+  requests:
+    cpu: 50m
+    memory: 64Mi
+
+service:
+  type: NodePort
+
+livenessProbe:
+  httpGet:
+    path: /health
+    port: 5000
+  initialDelaySeconds: 5
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /health
+    port: 5000
+  initialDelaySeconds: 3
+  periodSeconds: 5
+  timeoutSeconds: 3
+  failureThreshold: 3
+
+secrets:
+  enabled: true
+  data:
+    DB_USERNAME: "dev-user"
+    DB_PASSWORD: "dev-password"
+    API_KEY: "dev-api-key-12345"
+
+vault:
+  enabled: true
+  role: "devops-info-service"
+

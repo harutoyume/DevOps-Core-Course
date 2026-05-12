@@ -1,0 +1,68 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+# Lab 4 - Infrastructure as Code with Vagrant
+# This Vagrantfile defines a local Ubuntu VM for Lab 5 (Ansible)
+
+Vagrant.configure("2") do |config|
+  # Ubuntu 24.04 LTS (Noble Numbat)
+  # Using bento/ubuntu-24.04 for better ARM64 (Apple Silicon) compatibility
+  config.vm.box = "bento/ubuntu-24.04"
+  
+  # VM hostname
+  config.vm.hostname = "devops-lab-vm"
+  
+  # Private network with static IP
+  # This makes the VM accessible from your host machine
+  config.vm.network "private_network", ip: "192.168.56.10"
+  
+  # Port forwarding for application access
+  # Port 5000 (guest) -> Port 5001 (host): Python Flask app
+  # Port 80 (guest) -> Port 8080 (host): HTTP web server
+  config.vm.network "forwarded_port", guest: 5000, host: 5001, host_ip: "127.0.0.1"
+  config.vm.network "forwarded_port", guest: 80, host: 8080, host_ip: "127.0.0.1"
+  
+  # VirtualBox-specific configuration
+  config.vm.provider "virtualbox" do |vb|
+    # VM name in VirtualBox
+    vb.name = "devops-lab4-vm"
+    
+    # Display name
+    vb.gui = false
+    
+    # Memory allocation (2GB - recommended for Lab 5)
+    vb.memory = "2048"
+    
+    # CPU cores
+    vb.cpus = 2
+    
+    # Enable DNS proxy to avoid network issues
+    vb.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
+    vb.customize ["modifyvm", :id, "--natdnsproxy1", "on"]
+  end
+  
+  # Provisioning: Install and configure SSH server
+  # Ensure SSH is properly configured for Ansible (Lab 5)
+  config.vm.provision "shell", inline: <<-SHELL
+    # Update package list
+    apt-get update
+    
+    # Install essential packages
+    apt-get install -y openssh-server curl wget git
+    
+    # Ensure SSH service is running
+    systemctl enable ssh
+    systemctl start ssh
+    
+    # Display VM information
+    echo "========================================="
+    echo "DevOps Lab VM - Ready for Lab 5 (Ansible)"
+    echo "========================================="
+    echo "Hostname: $(hostname)"
+    echo "IP Address: 192.168.56.10"
+    echo "SSH: vagrant ssh"
+    echo "Or: ssh vagrant@192.168.56.10"
+    echo "Password: vagrant"
+    echo "========================================="
+  SHELL
+end

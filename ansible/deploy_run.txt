@@ -1,0 +1,27 @@
+
+PLAY [Deploy application] ******************************************************
+
+TASK [Gathering Facts] *********************************************************
+ok: [devops-vm]
+
+TASK [app_deploy : Log in to Docker Hub] ***************************************
+ok: [devops-vm]
+
+TASK [app_deploy : Pull Docker image] ******************************************
+ok: [devops-vm]
+
+TASK [app_deploy : Remove old container if exists] *****************************
+changed: [devops-vm]
+
+TASK [app_deploy : Run application container] **********************************
+changed: [devops-vm]
+
+TASK [app_deploy : Wait for application port to be available] ******************
+ok: [devops-vm]
+
+TASK [app_deploy : Verify application health endpoint] *************************
+ok: [devops-vm]
+
+PLAY RECAP *********************************************************************
+devops-vm                  : ok=7    changed=2    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+

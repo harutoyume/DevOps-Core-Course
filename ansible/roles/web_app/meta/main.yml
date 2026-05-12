@@ -1,0 +1,4 @@
+---
+# Role dependencies - ensure Docker is installed first
+dependencies:
+  - role: docker

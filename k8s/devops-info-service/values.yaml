@@ -1,0 +1,111 @@
+replicaCount: 3
+
+image:
+  repository: haruyume/devops-info-service
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  automount: true
+  annotations: {}
+  name: ""
+
+podAnnotations: {}
+podLabels: {}
+
+podSecurityContext: {}
+
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: false
+  runAsNonRoot: true
+  runAsUser: 1000
+
+containerPort: 5000
+
+service:
+  type: NodePort
+  port: 80
+  targetPort: 5000
+  nodePort: 30080
+  previewNodePort: 30081
+
+env:
+  - name: PORT
+    value: "5000"
+  - name: HOST
+    value: "0.0.0.0"
+
+secrets:
+  enabled: true
+  data:
+    DB_USERNAME: "placeholder-user"
+    DB_PASSWORD: "placeholder-pass"
+    API_KEY: "placeholder-key"
+
+vault:
+  enabled: false
+  role: "devops-info-service"
+
+configMap:
+  enabled: true
+  environment: "production"
+  logLevel: "INFO"
+  enableMetrics: "true"
+  dataDir: "/data"
+
+persistence:
+  enabled: true
+  accessMode: ReadWriteOnce
+  size: 100Mi
+  storageClass: ""  # Use default storage class
+
+resources:
+  limits:
+    cpu: 200m
+    memory: 256Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+livenessProbe:
+  httpGet:
+    path: /health
+    port: 5000
+  initialDelaySeconds: 10
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /health
+    port: 5000
+  initialDelaySeconds: 5
+  periodSeconds: 5
+  timeoutSeconds: 3
+  failureThreshold: 3
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+
+volumes: []
+volumeMounts: []
+
+# Argo Rollouts configuration
+rollout:
+  strategy: "canary"  # Options: "canary" or "blueGreen"
+  blueGreen:
+    autoPromotionEnabled: false
+    autoPromotionSeconds: 30
+nodeSelector: {}
+tolerations: []
+affinity: {}

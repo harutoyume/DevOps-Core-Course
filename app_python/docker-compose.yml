@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  devops-info-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: haruyume/devops-info-service:latest
+    container_name: devops-info-service
+    ports:
+      - "5000:5000"
+    environment:
+      - HOST=0.0.0.0
+      - PORT=5000
+      - DEBUG=false
+      - DATA_DIR=/data
+    volumes:
+      - ./data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  data:
+    driver: local

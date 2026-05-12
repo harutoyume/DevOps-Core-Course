@@ -1,0 +1,8 @@
+---
+# Handlers for app_deploy role
+
+- name: Restart app container
+  community.docker.docker_container:
+    name: "{{ web_app_name }}"
+    state: started
+    restart: true

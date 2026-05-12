@@ -1,0 +1,21 @@
+services:
+  {{ web_app_name }}:
+    image: {{ web_app_docker_image }}:{{ web_app_docker_tag }}
+    container_name: {{ web_app_name }}
+    ports:
+      - "{{ web_app_port }}:{{ web_app_internal_port }}"
+    environment:
+      PORT: "{{ web_app_internal_port }}"
+      HOST: "0.0.0.0"
+{% if app_env_vars is defined %}
+{% for key, value in app_env_vars.items() %}
+      {{ key }}: "{{ value }}"
+{% endfor %}
+{% endif %}
+    restart: unless-stopped
+    networks:
+      - app_network
+
+networks:
+  app_network:
+    driver: bridge
