@@ -1,0 +1,21 @@
+#!/usr/bin/expect -f
+# First-time workers.dev account subdomain + deploy (Ink prompts).
+set timeout 300
+set dir [lindex $argv 0]
+set sub [lindex $argv 1]
+if {$dir eq ""} { set dir "." }
+if {$sub eq ""} {
+  puts stderr "usage: expect deploy-register-workers-dev.expect <edge-api-dir> <account-workers-dev-subdomain>"
+  exit 2
+}
+set cmd [format {cd %s && npx wrangler deploy} $dir]
+spawn bash -c $cmd
+expect -re {register a workers\.dev subdomain now}
+send "y\r"
+expect -re {your workers\.dev subdomain to be}
+send "$sub\r"
+expect -re {Ok to proceed\?}
+send "y\r"
+expect eof
+catch wait result
+exit [lindex $result 3]

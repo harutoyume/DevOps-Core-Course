@@ -1,0 +1,21 @@
+// KV namespace SETTINGS — created with: wrangler kv namespace create SETTINGS --update-config --binding SETTINGS
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "edge-api",
+	"main": "src/index.ts",
+	"compatibility_date": "2026-05-13",
+	"workers_dev": true,
+	"observability": {
+		"enabled": true
+	},
+	"vars": {
+		"APP_NAME": "edge-api",
+		"COURSE_NAME": "devops-core"
+	},
+	"kv_namespaces": [
+		{
+			"binding": "SETTINGS",
+			"id": "127254d5c5a64e7f8ca8a1eebd7ee2d7"
+		}
+	]
+}
