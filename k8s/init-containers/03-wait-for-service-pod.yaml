@@ -1,0 +1,31 @@
+# Lab 16 — Task 3.2: Wait-for-service init — main starts only after Service DNS resolves.
+# Requires 02-wait-for-service-deps.yaml applied first.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: lab16-wait-for-svc
+  labels:
+    app.kubernetes.io/name: lab16-wait-for-svc
+spec:
+  initContainers:
+    - name: wait-for-service
+      image: busybox:1.36
+      command:
+        - sh
+        - -c
+        - >-
+          until wget -q -O- http://lab16-wait-demo-svc.default.svc.cluster.local/ >/dev/null 2>&1; do
+            echo "waiting for lab16-wait-demo-svc to accept HTTP...";
+            sleep 2;
+          done;
+          echo "Dependency Service is ready."
+  containers:
+    - name: main
+      image: busybox:1.36
+      command:
+        - sh
+        - -c
+        - >-
+          echo "Main started after dependency was reachable." &&
+          wget -q -O- http://lab16-wait-demo-svc.default.svc.cluster.local/ &&
+          sleep 3600

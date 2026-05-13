@@ -1,0 +1,22 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: devops-info-service
+  namespace: monitoring
+  labels:
+    # Must match the kube-prometheus-stack Helm release label so the
+    # Prometheus Operator picks this monitor up automatically.
+    release: monitoring
+spec:
+  # Scrape the Service in the default namespace.
+  namespaceSelector:
+    matchNames:
+      - default
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: devops-info-service
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 30s
+      scheme: http

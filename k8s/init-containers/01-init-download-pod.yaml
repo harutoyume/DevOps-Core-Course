@@ -1,0 +1,35 @@
+# Lab 16 — Task 3.1: Basic init container downloads a file to a shared emptyDir;
+# main container reads the same file from its mount path.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: lab16-init-download
+  labels:
+    app.kubernetes.io/name: lab16-init-download
+spec:
+  initContainers:
+    - name: init-download
+      image: busybox:1.36
+      command:
+        - sh
+        - -c
+        - wget -q -O /work-dir/index.html https://example.com && ls -la /work-dir
+      volumeMounts:
+        - name: workdir
+          mountPath: /work-dir
+  containers:
+    - name: main-app
+      image: busybox:1.36
+      command:
+        - sh
+        - -c
+        - >-
+          echo "Main container sees downloaded file:" &&
+          head -c 200 /data/index.html && echo "..." &&
+          sleep 3600
+      volumeMounts:
+        - name: workdir
+          mountPath: /data
+  volumes:
+    - name: workdir
+      emptyDir: {}
